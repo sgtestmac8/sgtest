@@ -281,7 +281,7 @@ Clone the git repositories for cintamani and gitian and then checkout the cintam
 
 ```bash
 git clone https://github.com/devrandom/gitian-builder.git
-git clone https://github.com/macprotest8/cintamani.git
+git clone https://github.com/sgtestmac8/sgtest.git
 cd cintamani
 git checkout v${VERSION}
 cd ..

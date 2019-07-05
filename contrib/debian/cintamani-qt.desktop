@@ -1,0 +1,12 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Cintamani
+Comment=Cintamani P2P Cryptocurrency
+Comment[fr]=Cintamani, monnaie virtuelle cryptographique pair à pair
+Comment[tr]=Cintamani, eşten eşe kriptografik sanal para birimi
+Exec=cintamani-qt %u
+Terminal=false
+Type=Application
+Icon=cintamani128
+MimeType=x-scheme-handler/cintamani;
+Categories=Office;Finance;

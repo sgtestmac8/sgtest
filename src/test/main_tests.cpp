@@ -1,30 +1,26 @@
-// Copyright (c) 2014-2015 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
+// Copyright (c) 2014 The Bitcoin Core developers
+// Copyright (c) 2014-2015 The Cintamani developers
+// Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "net.h"
+#include "primitives/transaction.h"
+#include "main.h"
 
-#include "test/test_dash.h"
-
-#include <boost/signals2/signal.hpp>
 #include <boost/test/unit_test.hpp>
 
-BOOST_FIXTURE_TEST_SUITE(main_tests, TestingSetup)
+BOOST_AUTO_TEST_SUITE(main_tests)
 
-bool ReturnFalse() { return false; }
-bool ReturnTrue() { return true; }
-
-BOOST_AUTO_TEST_CASE(test_combiner_all)
+BOOST_AUTO_TEST_CASE(subsidy_limit_test)
 {
-    boost::signals2::signal<bool (), CombinerAll> Test;
-    BOOST_CHECK(Test());
-    Test.connect(&ReturnFalse);
-    BOOST_CHECK(!Test());
-    Test.connect(&ReturnTrue);
-    BOOST_CHECK(!Test());
-    Test.disconnect(&ReturnFalse);
-    BOOST_CHECK(Test());
-    Test.disconnect(&ReturnTrue);
-    BOOST_CHECK(Test());
+    CAmount nSum = 0;
+    for (int nHeight = 0; nHeight < 14000000; nHeight += 1000) {
+        /* @TODO fix subsidity, add nBits */
+        CAmount nSubsidy = GetBlockValue(0, nHeight, 0);
+        BOOST_CHECK(nSubsidy <= 25 * COIN);
+        nSum += nSubsidy * 1000;
+        BOOST_CHECK(MoneyRange(nSum));
+    }
+    BOOST_CHECK(nSum == 1350824726649000ULL);
 }
+
 BOOST_AUTO_TEST_SUITE_END()

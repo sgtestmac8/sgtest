@@ -7,21 +7,11 @@
 #define BITCOIN_CONSENSUS_CONSENSUS_H
 
 /** The maximum allowed size for a serialized block, in bytes (network rule) */
-static const unsigned int MAX_LEGACY_BLOCK_SIZE = 1000000;
-static const unsigned int MAX_DIP0001_BLOCK_SIZE = 2000000;
-inline unsigned int MaxBlockSize(bool fDIP0001Active /*= false */)
-{
-    return fDIP0001Active ? MAX_DIP0001_BLOCK_SIZE : MAX_LEGACY_BLOCK_SIZE;
-}
+static const unsigned int MAX_BLOCK_SIZE = 1000000;
 /** The maximum allowed number of signature check operations in a block (network rule) */
-inline unsigned int MaxBlockSigOps(bool fDIP0001Active /*= false */)
-{
-    return MaxBlockSize(fDIP0001Active) / 50;
-}
-/** The maximum allowed size of version 3 extra payload */
-static const unsigned int MAX_TX_EXTRA_PAYLOAD = 10000;
+static const unsigned int MAX_BLOCK_SIGOPS = MAX_BLOCK_SIZE/50;
 /** Coinbase transaction outputs can only be spent after this number of new blocks (network rule) */
-static const int COINBASE_MATURITY = 100;
+static const int COINBASE_MATURITY = 15;
 
 /** Flags for nSequence and nLockTime locks */
 enum {

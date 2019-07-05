@@ -1,0 +1,20 @@
+<!DOCTYPE RCC><RCC version="1.0">
+    <qresource prefix="/translations">
+        <file alias="bg">locale/cintamani_bg.qm</file>
+        <file alias="de">locale/cintamani_de.qm</file>
+        <file alias="en">locale/cintamani_en.qm</file>
+        <file alias="es">locale/cintamani_es.qm</file>
+        <file alias="fi">locale/cintamani_fi.qm</file>
+        <file alias="fr">locale/cintamani_fr.qm</file>
+        <file alias="it">locale/cintamani_it.qm</file>
+        <file alias="ja">locale/cintamani_ja.qm</file>
+        <file alias="pl">locale/cintamani_pl.qm</file>
+        <file alias="pt">locale/cintamani_pt.qm</file>
+        <file alias="ru">locale/cintamani_ru.qm</file>
+        <file alias="sk">locale/cintamani_sk.qm</file>
+        <file alias="sv">locale/cintamani_sv.qm</file>
+        <file alias="vi">locale/cintamani_vi.qm</file>
+        <file alias="zh_CN">locale/cintamani_zh_CN.qm</file>
+        <file alias="zh_TW">locale/cintamani_zh_TW.qm</file>
+    </qresource>
+</RCC>

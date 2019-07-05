@@ -1,5 +1,5 @@
-// Copyright (c) 2011-2014 The Bitcoin Core developers
-// Distributed under the MIT software license, see the accompanying
+// Copyright (c) 2011-2013 The Bitcoin developers
+// Distributed under the MIT/X11 software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #ifndef BITCOIN_QT_TRANSACTIONRECORD_H
@@ -20,9 +20,8 @@ class TransactionStatus
 {
 public:
     TransactionStatus():
-        countsForBalance(false), lockedByInstantSend(false), sortKey(""),
-        matures_in(0), status(Offline), depth(0), open_for(0), cur_num_blocks(-1),
-        cachedNumISLocks(-1), cachedChainLockHeight(-1)
+        countsForBalance(false), sortKey(""),
+        matures_in(0), status(Offline), depth(0), open_for(0), cur_num_blocks(-1)
     { }
 
     enum Status {
@@ -34,7 +33,6 @@ public:
         Unconfirmed,        /**< Not yet mined into a block **/
         Confirming,         /**< Confirmed, but waiting for the recommended number of confirmations **/
         Conflicted,         /**< Conflicts with other transaction or mempool **/
-        Abandoned,          /**< Abandoned from the wallet **/
         /// Generated (mined) transactions
         Immature,           /**< Mined but waiting for maturity */
         MaturesWarning,     /**< Transaction will likely not mature because no nodes have confirmed */
@@ -43,8 +41,6 @@ public:
 
     /// Transaction counts towards available balance
     bool countsForBalance;
-    /// Transaction was locked via InstantSend
-    bool lockedByInstantSend;
     /// Sorting key based on status
     std::string sortKey;
 
@@ -65,10 +61,8 @@ public:
     /** Current number of blocks (to know whether cached status is still valid) */
     int cur_num_blocks;
 
-    //** Know when to update transaction for IS-locks **/
-    int cachedNumISLocks;
-    //** Know when to update transaction for chainlocks **/
-    int cachedChainLockHeight;
+    //** Know when to update transaction for ix locks **/
+    int cur_num_ix_locks;
 };
 
 /** UI model for a transaction. A core transaction can be represented by multiple UI transactions if it has
@@ -86,12 +80,12 @@ public:
         RecvWithAddress,
         RecvFromOther,
         SendToSelf,
-        RecvWithPrivateSend,
-        PrivateSendDenominate,
-        PrivateSendCollateralPayment,
-        PrivateSendMakeCollaterals,
-        PrivateSendCreateDenominations,
-        PrivateSend
+        RecvWithDarksend,
+        DarksendDenominate,
+        DarksendCollateralPayment,
+        DarksendMakeCollaterals,
+        DarksendCreateDenominations,
+        Darksent
     };
 
     /** Number of confirmation recommended for accepting a transaction */
@@ -102,16 +96,16 @@ public:
     {
     }
 
-    TransactionRecord(uint256 _hash, qint64 _time):
-            hash(_hash), time(_time), type(Other), address(""), debit(0),
+    TransactionRecord(uint256 hash, qint64 time):
+            hash(hash), time(time), type(Other), address(""), debit(0),
             credit(0), idx(0)
     {
     }
 
-    TransactionRecord(uint256 _hash, qint64 _time,
-                Type _type, const std::string &_address,
-                const CAmount& _debit, const CAmount& _credit):
-            hash(_hash), time(_time), type(_type), address(_address), debit(_debit), credit(_credit),
+    TransactionRecord(uint256 hash, qint64 time,
+                Type type, const std::string &address,
+                const CAmount& debit, const CAmount& credit):
+            hash(hash), time(time), type(type), address(address), debit(debit), credit(credit),
             idx(0)
     {
     }
@@ -143,16 +137,16 @@ public:
     /** Return the unique identifier for this transaction (part) */
     QString getTxID() const;
 
-    /** Return the output index of the subtransaction  */
-    int getOutputIndex() const;
+    /** Format subtransaction id */
+    static QString formatSubTxId(const uint256 &hash, int vout);
 
     /** Update status from core wallet tx.
      */
-    void updateStatus(const CWalletTx &wtx, int numISLocks, int chainLockHeight);
+    void updateStatus(const CWalletTx &wtx);
 
     /** Return whether a status update is needed.
      */
-    bool statusUpdateNeeded(int numISLocks, int chainLockHeight);
+    bool statusUpdateNeeded();
 };
 
 #endif // BITCOIN_QT_TRANSACTIONRECORD_H

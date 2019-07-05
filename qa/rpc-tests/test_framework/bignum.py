@@ -1,11 +1,16 @@
-#!/usr/bin/env python3
 #
-# Distributed under the MIT software license, see the accompanying
+#
+# bignum.py
+#
+# This file is copied from python-bitcoinlib.
+#
+# Distributed under the MIT/X11 software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Big number routines.
+#
 
-This file is copied from python-bitcoinlib.
-"""
+"""Bignum routines"""
+
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import struct
 

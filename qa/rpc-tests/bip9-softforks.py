@@ -1,22 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python2
 # Copyright (c) 2015 The Bitcoin Core developers
-# Distributed under the MIT software license, see the accompanying
+# Distributed under the MIT/X11 software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
-"""Test BIP 9 soft forks.
+#
 
-Connect to a single node.
-regtest lock-in with 108/144 block signalling
-activation after a further 144 blocks
-mine 2 block and save coinbases for later use
-mine 141 blocks to transition from DEFINED to STARTED
-mine 100 blocks signalling readiness and 44 not in order to fail to change state this period
-mine 108 blocks signalling readiness and 36 blocks not signalling readiness (STARTED->LOCKED_IN)
-mine a further 143 blocks (LOCKED_IN)
-test that enforcement has not triggered (which triggers ACTIVE)
-test that enforcement has triggered
-"""
-
-from test_framework.blockstore import BlockStore
 from test_framework.test_framework import ComparisonTestFramework
 from test_framework.util import *
 from test_framework.mininode import CTransaction, NetworkThread
@@ -27,15 +14,29 @@ from io import BytesIO
 import time
 import itertools
 
+'''
+This test is meant to exercise BIP forks
+Connect to a single node.
+regtest lock-in with 108/144 block signalling
+activation after a further 144 blocks
+mine 2 block and save coinbases for later use
+mine 141 blocks to transition from DEFINED to STARTED
+mine 100 blocks signalling readiness and 44 not in order to fail to change state this period
+mine 108 blocks signalling readiness and 36 blocks not signalling readiness (STARTED->LOCKED_IN)
+mine a further 143 blocks (LOCKED_IN)
+test that enforcement has not triggered (which triggers ACTIVE)
+test that enforcement has triggered
+'''
+
+
 class BIP9SoftForksTest(ComparisonTestFramework):
 
     def __init__(self):
-        super().__init__()
         self.num_nodes = 1
 
     def setup_network(self):
-        self.nodes = start_nodes(self.num_nodes, self.options.tmpdir,
-                                 extra_args=[['-whitelist=127.0.0.1']],
+        self.nodes = start_nodes(1, self.options.tmpdir,
+                                 extra_args=[['-debug', '-whitelist=127.0.0.1']],
                                  binary=[self.options.testbinary])
 
     def run_test(self):
@@ -63,7 +64,7 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         return tx
 
     def generate_blocks(self, number, version, test_blocks = []):
-        for i in range(number):
+        for i in xrange(number):
             block = create_block(self.tip, create_coinbase(self.height), self.last_block_time + 1)
             block.nVersion = version
             block.rehash()
@@ -76,26 +77,21 @@ class BIP9SoftForksTest(ComparisonTestFramework):
 
     def get_bip9_status(self, key):
         info = self.nodes[0].getblockchaininfo()
-        return info['bip9_softforks'][key]
+        for row in info['bip9_softforks']:
+            if row['id'] == key:
+                return row
+        raise IndexError ('key:"%s" not found' % key)
 
-    def test_BIP(self, bipName, activated_version, invalidate, invalidatePostSignature, bitno):
-        wait_to_sync(self.nodes[0])
-        assert_equal(self.get_bip9_status(bipName)['status'], 'defined')
-        assert_equal(self.get_bip9_status(bipName)['since'], 0)
+
+    def test_BIP(self, bipName, activated_version, invalidate, invalidatePostSignature):
         # generate some coins for later
         self.coinbase_blocks = self.nodes[0].generate(2)
         self.height = 3  # height of the next block to build
-        self.tip = int("0x" + self.nodes[0].getbestblockhash(), 0)
+        self.tip = int ("0x" + self.nodes[0].getbestblockhash() + "L", 0)
         self.nodeaddress = self.nodes[0].getnewaddress()
-        self.last_block_time = get_mocktime() + 1
+        self.last_block_time = int(time.time())
 
         assert_equal(self.get_bip9_status(bipName)['status'], 'defined')
-        assert_equal(self.get_bip9_status(bipName)['since'], 0)
-        tmpl = self.nodes[0].getblocktemplate({})
-        assert(bipName not in tmpl['rules'])
-        assert(bipName not in tmpl['vbavailable'])
-        assert_equal(tmpl['vbrequired'], 0)
-        assert_equal(tmpl['version'], 0x20000000)
 
         # Test 1
         # Advance from DEFINED to STARTED
@@ -103,12 +99,6 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         yield TestInstance(test_blocks, sync_every_block=False)
 
         assert_equal(self.get_bip9_status(bipName)['status'], 'started')
-        assert_equal(self.get_bip9_status(bipName)['since'], 144)
-        tmpl = self.nodes[0].getblocktemplate({})
-        assert(bipName not in tmpl['rules'])
-        assert_equal(tmpl['vbavailable'][bipName], bitno)
-        assert_equal(tmpl['vbrequired'], 0)
-        assert(tmpl['version'] & activated_version)
 
         # Test 2
         # Fail to achieve LOCKED_IN 100 out of 144 signal bit 1
@@ -120,12 +110,6 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         yield TestInstance(test_blocks, sync_every_block=False)
 
         assert_equal(self.get_bip9_status(bipName)['status'], 'started')
-        assert_equal(self.get_bip9_status(bipName)['since'], 144)
-        tmpl = self.nodes[0].getblocktemplate({})
-        assert(bipName not in tmpl['rules'])
-        assert_equal(tmpl['vbavailable'][bipName], bitno)
-        assert_equal(tmpl['vbrequired'], 0)
-        assert(tmpl['version'] & activated_version)
 
         # Test 3
         # 108 out of 144 signal bit 1 to achieve LOCKED_IN
@@ -137,9 +121,6 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         yield TestInstance(test_blocks, sync_every_block=False)
 
         assert_equal(self.get_bip9_status(bipName)['status'], 'locked_in')
-        assert_equal(self.get_bip9_status(bipName)['since'], 432)
-        tmpl = self.nodes[0].getblocktemplate({})
-        assert(bipName not in tmpl['rules'])
 
         # Test 4
         # 143 more version 536870913 blocks (waiting period-1)
@@ -147,9 +128,6 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         yield TestInstance(test_blocks, sync_every_block=False)
 
         assert_equal(self.get_bip9_status(bipName)['status'], 'locked_in')
-        assert_equal(self.get_bip9_status(bipName)['since'], 432)
-        tmpl = self.nodes[0].getblocktemplate({})
-        assert(bipName not in tmpl['rules'])
 
         # Test 5
         # Check that the new rule is enforced
@@ -173,12 +151,6 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         yield TestInstance([[block, True]])
 
         assert_equal(self.get_bip9_status(bipName)['status'], 'active')
-        assert_equal(self.get_bip9_status(bipName)['since'], 576)
-        tmpl = self.nodes[0].getblocktemplate({})
-        assert(bipName in tmpl['rules'])
-        assert(bipName not in tmpl['vbavailable'])
-        assert_equal(tmpl['vbrequired'], 0)
-        assert(not (tmpl['version'] & (1 << bitno)))
 
         # Test 6
         # Check that the new sequence lock rules are enforced
@@ -200,12 +172,11 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         yield TestInstance([[block, False]])
 
         # Restart all
-        self.test.block_store.close()
         stop_nodes(self.nodes)
+        wait_bitcoinds()
         shutil.rmtree(self.options.tmpdir)
         self.setup_chain()
         self.setup_network()
-        self.test.block_store = BlockStore(self.options.tmpdir)
         self.test.clear_all_connections()
         self.test.add_all_connections(self.nodes)
         NetworkThread().start() # Start up network handling in another thread
@@ -213,9 +184,9 @@ class BIP9SoftForksTest(ComparisonTestFramework):
 
     def get_tests(self):
         for test in itertools.chain(
-                self.test_BIP('csv', 0x20000001, self.sequence_lock_invalidate, self.donothing, 0),
-                self.test_BIP('csv', 0x20000001, self.mtp_invalidate, self.donothing, 0),
-                self.test_BIP('csv', 0x20000001, self.donothing, self.csv_invalidate, 0)
+                self.test_BIP('csv', 536870913, self.sequence_lock_invalidate, self.donothing),
+                self.test_BIP('csv', 536870913, self.mtp_invalidate, self.donothing),
+                self.test_BIP('csv', 536870913, self.donothing, self.csv_invalidate)
         ):
             yield test
 
@@ -223,21 +194,21 @@ class BIP9SoftForksTest(ComparisonTestFramework):
         return
 
     def csv_invalidate(self, tx):
-        """Modify the signature in vin 0 of the tx to fail CSV
+        '''Modify the signature in vin 0 of the tx to fail CSV
         Prepends -1 CSV DROP in the scriptSig itself.
-        """
+        '''
         tx.vin[0].scriptSig = CScript([OP_1NEGATE, OP_CHECKSEQUENCEVERIFY, OP_DROP] +
                                       list(CScript(tx.vin[0].scriptSig)))
 
     def sequence_lock_invalidate(self, tx):
-        """Modify the nSequence to make it fails once sequence lock rule is
-        activated (high timespan).
-        """
+        '''Modify the nSequence to make it fails once sequence lock rule is activated (high timespan)
+        '''
         tx.vin[0].nSequence = 0x00FFFFFF
         tx.nLockTime = 0
 
     def mtp_invalidate(self, tx):
-        """Modify the nLockTime to make it fails once MTP rule is activated."""
+        '''Modify the nLockTime to make it fails once MTP rule is activated
+        '''
         # Disable Sequence lock, Activate nLockTime
         tx.vin[0].nSequence = 0x90FFFFFF
         tx.nLockTime = self.last_block_time

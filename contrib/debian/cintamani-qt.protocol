@@ -1,0 +1,11 @@
+[Protocol]
+exec=cintamani-qt '%u'
+protocol=cintamani
+input=none
+output=none
+helper=true
+listing=
+reading=false
+writing=false
+makedir=false
+deleting=false

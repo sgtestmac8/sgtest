@@ -1,0 +1,27 @@
+# /etc/conf.d/cintamanid: config file for /etc/init.d/cintamanid
+
+# Config file location
+#BITCOIND_CONFIGFILE="/etc/cintamani/cintamani.conf"
+
+# What directory to write pidfile to?  (created and owned by $BITCOIND_USER)
+#BITCOIND_PIDDIR="/var/run/cintamanid"
+
+# What filename to give the pidfile
+#BITCOIND_PIDFILE="${BITCOIND_PIDDIR}/cintamanid.pid"
+
+# Where to write cintamanid data (be mindful that the blockchain is large)
+#BITCOIND_DATADIR="/var/lib/cintamanid"
+
+# User and group to own cintamanid process
+#BITCOIND_USER="cintamani"
+#BITCOIND_GROUP="cintamani"
+
+# Path to cintamanid executable
+#BITCOIND_BIN="/usr/bin/cintamanid"
+
+# Nice value to run cintamanid under
+#BITCOIND_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+BITCOIND_OPTS="-disablewallet"
+

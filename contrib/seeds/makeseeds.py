@@ -1,4 +1,4 @@
-#!/usr/bin/env python  
+#!/usr/bin/env python
 #
 # Generate seeds.txt from Pieter's DNS seeder
 #
@@ -12,8 +12,8 @@ MIN_BLOCKS = 200000
 # These are hosts that have been observed to be behaving strangely (e.g.
 # aggressively connecting to every node).
 SUSPICIOUS_HOSTS = set([
-"18.218.20.171", "18.191.138.58",
-"127.0.0.1"
+    "18.218.20.171", "18.191.141.168", "10.211.55.7",
+    "127.0.0.1"
 ])
 
 import re
